@@ -159,10 +159,4 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))  # Default to 8000 if PORT is not set
     uvicorn.run(app, host="0.0.0.0", port=port)
 
-# Ensure the app is configured to run on 0.0.0.0 in production
-if os.environ.get("RENDER", False):
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
-
 
