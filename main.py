@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler
 import logging
 from fastapi.responses import JSONResponse
 import pandas as pd
+from fastapi.exceptions import RequestValidationError
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -171,6 +172,14 @@ async def model_info():
     }
     logger.info(f"Sending response data: {response}")
     return response
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    logger.error(f"Validation error: {exc}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": exc.body},
+    )
 
 if __name__ == "__main__":
     import uvicorn
