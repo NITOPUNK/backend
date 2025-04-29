@@ -204,4 +204,9 @@ pytest
 
 ## License
 
-[Include your license information here] 
+[Include your license information here]
+
+## Updates
+
+### April 29, 2025
+- Added a simplified prediction endpoint (`/predict-simple`) for easier integration with Flutter applications. This endpoint accepts query parameters for input and internally calls the `/predict` endpoint.

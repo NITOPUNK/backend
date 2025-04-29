@@ -6,6 +6,7 @@ import joblib
 import os
 from sklearn.preprocessing import StandardScaler
 import logging
+from fastapi.responses import JSONResponse
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -75,6 +76,7 @@ async def predict_soc_difference(request: BatteryRequest):
     """
     Predict the State of Charge (SoC) difference based on input parameters.
     """
+    logger.info(f"Received request data: {request}")
     try:
         # Handle missing model or scaler
         if model is None or scaler is None:
@@ -108,31 +110,17 @@ async def predict_soc_difference(request: BatteryRequest):
         # Assuming average EV has 400 km range at 100% battery
         estimated_range_impact = prediction * 400  
         
-        return {
+        response = {
             "predicted_soc_difference": round(prediction, 4),
             "estimated_range_impact": round(estimated_range_impact, 2)
         }
+        logger.info(f"Sending response data: {response}")
+        return response
     
     except Exception as e:
         logger.error(f"Prediction error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error making prediction: {str(e)}")
 
-@app.get("/model-info")
-async def model_info():
-    """
-    Return information about the loaded model
-    """
-    if model is None or scaler is None:
-        return {"status": "error", "message": "Model or scaler not loaded"}
-    
-    return {
-        "status": "ok",
-        "model_type": str(type(model).__name__),
-        "scaler_type": str(type(scaler).__name__),
-        "feature_count": model.n_features_in_ if hasattr(model, 'n_features_in_') else "unknown"
-    }
-
-# Flutter integration API - simplified endpoint with query parameters
 @app.get("/predict-simple")
 async def predict_simple(
     distance: float = Query(..., description="Distance in kilometers"),
@@ -144,14 +132,43 @@ async def predict_simple(
     """
     Simplified prediction endpoint using query parameters for easier Flutter integration
     """
-    request = BatteryRequest(
-        distance=distance,
-        duration=duration,
-        ambient_temp=ambient_temp,
-        weather=weather,
-        month=month
-    )
-    return await predict_soc_difference(request)
+    logger.info(f"Received query parameters: distance={distance}, duration={duration}, ambient_temp={ambient_temp}, weather={weather}, month={month}")
+    try:
+        # Construct the BatteryRequest object
+        request = BatteryRequest(
+            distance=distance,
+            duration=duration,
+            ambient_temp=ambient_temp,
+            weather=weather,
+            month=month
+        )
+        # Call the predict_soc_difference function
+        response = await predict_soc_difference(request)
+        logger.info(f"Sending response data: {response}")
+        return response
+    except Exception as e:
+        logger.error(f"Error in predict-simple endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error in predict-simple endpoint: {str(e)}")
+
+@app.get("/model-info")
+async def model_info():
+    """
+    Return information about the loaded model
+    """
+    logger.info("Received request for model info")
+    if model is None or scaler is None:
+        response = {"status": "error", "message": "Model or scaler not loaded"}
+        logger.info(f"Sending response data: {response}")
+        return response
+    
+    response = {
+        "status": "ok",
+        "model_type": str(type(model).__name__),
+        "scaler_type": str(type(scaler).__name__),
+        "feature_count": model.n_features_in_ if hasattr(model, 'n_features_in_') else "unknown"
+    }
+    logger.info(f"Sending response data: {response}")
+    return response
 
 if __name__ == "__main__":
     import uvicorn
