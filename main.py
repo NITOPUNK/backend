@@ -7,6 +7,7 @@ import os
 from sklearn.preprocessing import StandardScaler
 import logging
 from fastapi.responses import JSONResponse
+import pandas as pd
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -81,7 +82,7 @@ async def predict_soc_difference(request: BatteryRequest):
         # Handle missing model or scaler
         if model is None or scaler is None:
             raise HTTPException(status_code=500, detail="Model or scaler not loaded properly")
-        
+
         # Encode inputs
         weather_encoded = weather_categories.get(request.weather.lower(), 0.5)
         season = (
@@ -91,14 +92,15 @@ async def predict_soc_difference(request: BatteryRequest):
             4  # Winter
         )
 
-        # Prepare features
-        features = np.array([[
+        # Prepare features as a DataFrame with column names
+        feature_columns = ["distance", "duration", "ambient_temp", "weather_encoded", "season"]
+        features = pd.DataFrame([[
             request.distance, 
             request.duration, 
             request.ambient_temp, 
             weather_encoded, 
             season
-        ]])
+        ]], columns=feature_columns)
 
         # Scale features
         features_scaled = scaler.transform(features)
