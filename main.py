@@ -94,7 +94,13 @@ async def predict_soc_difference(request: BatteryRequest):
         )
 
         # Prepare features as a DataFrame with column names
-        feature_columns = ["distance", "duration", "ambient_temp", "weather_encoded", "season"]
+        feature_columns = [
+            "Distance [km]", 
+            "Duration [min]", 
+            "Ambient Temperature (Start) [°C]", 
+            "Weather_Encoded", 
+            "Season"
+        ]
         features = pd.DataFrame([[
             request.distance, 
             request.duration, 
