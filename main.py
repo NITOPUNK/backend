@@ -102,8 +102,8 @@ async def predict_soc_difference(request: BatteryRequest):
             season
         ]], columns=feature_columns)
 
-        # Scale features
-        features_scaled = scaler.transform(features)
+        # Scale features (fix: use scaler.feature_names_in_)
+        features_scaled = scaler.transform(features[scaler.feature_names_in_])
 
         # Make prediction
         prediction = model.predict(features_scaled)[0]
